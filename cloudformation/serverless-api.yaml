@@ -101,23 +101,31 @@ Resources:
           - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AddProductLambda.Arn}/invocations"
           - { AddProductLambda: !Ref AddProductLambda }
 
-  # Deploy API Gateway with Logging Enabled
+  # Deploy API Gateway
   APIDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn: AddProductMethod
     Properties:
       RestApiId: !Ref APIGateway
       StageName: "prod"
-      StageDescription:
-        AccessLogSetting:
-          DestinationArn: !GetAtt ApiGatewayLogGroup.Arn
-          Format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","responseLength":"$context.responseLength"}'
+  
+  # API Gateway Stage with Logging
+  APIStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      StageName: "prod"
+      RestApiId: !Ref APIGateway
+      DeploymentId: !Ref APIDeployment
+      AccessLogSetting:
+        DestinationArn: !GetAtt ApiGatewayLogGroup.Arn
+        Format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","responseLength":"$context.responseLength"}'
       MethodSettings:
         - ResourcePath: "/*"
           HttpMethod: "*"
           LoggingLevel: "INFO"
           DataTraceEnabled: true
           MetricsEnabled: true
+
 
   # Grant API Gateway Permission to invoke Lambda
   AddProductLambdaPermission:
