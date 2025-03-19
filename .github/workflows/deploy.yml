@@ -32,23 +32,30 @@ jobs:
 
       - name: Install Dependencies & Package Each Lambda Function
         run: |
+          set -e  # Exit script on error
           for file in lambda_functions/*.py; do
             function_name=$(basename "$file" .py)
             echo "Packaging $function_name..."
 
             mkdir -p package
-            pip install --target package -r lambda_functions/requirements.txt
-            cp "$file" package/
+            echo "Installing dependencies..."
+            pip install --target package -r lambda_functions/requirements.txt || { echo "❌ Failed to install dependencies"; exit 1; }
+            
+            echo "Copying Lambda function file..."
+            cp "$file" package/ || { echo "❌ Failed to copy $file"; exit 1; }
 
+            echo "Creating ZIP file..."
             cd package
-            zip -r "../${function_name}.zip" .
+            zip -r "../${function_name}.zip" . || { echo "❌ Failed to create ZIP"; exit 1; }
             cd ..
 
-            aws s3 cp "${function_name}.zip" "s3://${{ secrets.S3_BUCKET }}/${function_name}.zip"
+            echo "Uploading to S3..."
+            aws s3 cp "${function_name}.zip" "s3://${{ secrets.S3_BUCKET }}/${function_name}.zip" || { echo "❌ Failed to upload ${function_name}.zip to S3"; exit 1; }
 
             rm -rf package "${function_name}.zip"
           done
-
+        id: package-lambda
+        continue-on-error: false
 
       - name: Export Environment Variables
         run: |
