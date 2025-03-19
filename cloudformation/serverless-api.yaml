@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "CloudFormation template for MongoDB-backed API using Lambda and API Gateway"
+Description: "CloudFormation template for MongoDB-backed API using Lambda and API Gateway with logging"
 
 Parameters:
   MongoDBConnectionString:
@@ -31,7 +31,7 @@ Resources:
             Action:
               - "sts:AssumeRole"
       Policies:
-        - PolicyName: LambdaPolicy
+        - PolicyName: LambdaLoggingPolicy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -40,7 +40,14 @@ Resources:
                   - "logs:CreateLogGroup"
                   - "logs:CreateLogStream"
                   - "logs:PutLogEvents"
-                Resource: "*"
+                Resource: "arn:aws:logs:*:*:*"
+
+  # CloudWatch Log Group for Lambda
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AddProductLambda}"
+      RetentionInDays: 7  # Keep logs for 7 days
 
   # Lambda Function (S3-based)
   AddProductLambda:
@@ -63,6 +70,13 @@ Resources:
     Type: AWS::ApiGateway::RestApi
     Properties:
       Name: "MongoDBProductAPI"
+
+  # API Gateway CloudWatch Log Group
+  ApiGatewayLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/api-gateway/${APIGateway}"
+      RetentionInDays: 7
 
   # API Resource (/products)
   ProductsResource:
@@ -87,13 +101,23 @@ Resources:
           - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AddProductLambda.Arn}/invocations"
           - { AddProductLambda: !Ref AddProductLambda }
 
-  # Deploy API Gateway
+  # Deploy API Gateway with Logging Enabled
   APIDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn: AddProductMethod
     Properties:
       RestApiId: !Ref APIGateway
       StageName: "prod"
+      StageDescription:
+        AccessLogSetting:
+          DestinationArn: !GetAtt ApiGatewayLogGroup.Arn
+          Format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","responseLength":"$context.responseLength"}'
+      MethodSettings:
+        - ResourcePath: "/*"
+          HttpMethod: "*"
+          LoggingLevel: "INFO"
+          DataTraceEnabled: true
+          MetricsEnabled: true
 
   # Grant API Gateway Permission to invoke Lambda
   AddProductLambdaPermission:
