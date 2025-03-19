@@ -32,21 +32,23 @@ jobs:
 
       - name: Install Dependencies & Package Each Lambda Function
         run: |
-          mkdir -p package
-          pip install --target package -r lambda_functions/requirements.txt
-
           for file in lambda_functions/*.py; do
             function_name=$(basename "$file" .py)
             echo "Packaging $function_name..."
 
+            mkdir -p package
+            pip install --target package -r lambda_functions/requirements.txt
             cp "$file" package/
-            zip -r "${function_name}.zip" package/*
+
+            cd package
+            zip -r "../${function_name}.zip" .
+            cd ..
+
             aws s3 cp "${function_name}.zip" "s3://${{ secrets.S3_BUCKET }}/${function_name}.zip"
 
-            rm -rf package/*
+            rm -rf package "${function_name}.zip"
           done
-        id: package-lambda
-        continue-on-error: false
+
 
       - name: Export Environment Variables
         run: |
