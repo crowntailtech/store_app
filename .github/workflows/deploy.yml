@@ -18,6 +18,12 @@ jobs:
         with:
           python-version: '3.8'
 
+      - name: Configure AWS CLI
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region ${{ secrets.AWS_REGION }}
+
       - name: Install Dependencies & Package Each Lambda Function
         run: |
           for dir in lambda_functions/*; do
@@ -36,12 +42,6 @@ jobs:
             fi
           done
 
-      - name: Configure AWS CLI
-        run: |
-          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY }}
-          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws configure set region ${{ secrets.AWS_REGION }}
-          
       - name: Export Environment Variables
         run: |
           echo "S3_BUCKET=${{ secrets.S3_BUCKET }}" >> $GITHUB_ENV
