@@ -14,11 +14,6 @@ Parameters:
     Type: String
     Description: "S3 Key for the Lambda function zip file"
 
-  LambdaS3Version:
-    Type: String
-    Default: ""
-    Description: "S3 Object Version for Lambda code"
-
 Resources:
 
   # IAM Role for Lambda
@@ -58,10 +53,6 @@ Resources:
       Code:
         S3Bucket: !Ref LambdaS3Bucket
         S3Key: !Ref LambdaS3Key
-        Fn::If:
-          - UseVersionedS3Object
-          - S3ObjectVersion: !Ref LambdaS3Version
-          - !Ref "AWS::NoValue"
       Environment:
         Variables:
           MONGO_URI: !Ref MongoDBConnectionString
