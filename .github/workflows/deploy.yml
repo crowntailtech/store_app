@@ -38,6 +38,16 @@ jobs:
         run: |
           aws s3 cp add_product.zip s3://${{ secrets.S3_BUCKET }}/add_product.zip
 
+      - name: Export Environment Variables
+        run: |
+          echo "S3_BUCKET=${{ secrets.S3_BUCKET }}" >> $GITHUB_ENV
+          echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> $GITHUB_ENV
+
+      - name: Debug Variables
+        run: |
+          echo "Using S3_BUCKET: $S3_BUCKET"
+          echo "Using MONGO_URI: $MONGO_URI"
+
       - name: Deploy CloudFormation Stack
         run: |
           aws cloudformation deploy \
@@ -45,6 +55,6 @@ jobs:
             --template-file cloudformation/serverless-api.yaml \
             --capabilities CAPABILITY_NAMED_IAM \
             --parameter-overrides \
-              MongoDBConnectionString=${{ secrets.MONGO_URI }} \
-              LambdaS3Bucket=${{ secrets.S3_BUCKET }} \
+              MongoDBConnectionString=$MONGO_URI \
+              LambdaS3Bucket=$S3_BUCKET \
               LambdaS3Key=add_product.zip
