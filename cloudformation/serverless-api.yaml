@@ -149,6 +149,7 @@ Resources:
       - GetProductsMethod
     Properties:
       RestApiId: !Ref APIGateway
+      Description: !Sub "Deployment - ${AWS::Timestamp}"
 
   # Define API Gateway Stage (Separate from Deployment)
   APIStage:
