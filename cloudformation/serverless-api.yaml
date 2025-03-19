@@ -149,7 +149,6 @@ Resources:
       - GetProductsMethod
     Properties:
       RestApiId: !Ref APIGateway
-      Description: !Sub "Deployment - ${AWS::StackName} - ${AWS::Region} - ${AWS::AccountId} - ${AWS::NotificationARNs}"
 
   # Define API Gateway Stage (Separate from Deployment)
   APIStage:
