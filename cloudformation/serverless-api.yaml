@@ -101,6 +101,15 @@ Resources:
           - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AddProductLambda.Arn}/invocations"
           - { AddProductLambda: !Ref AddProductLambda }
 
+  # Grant API Gateway Permission to invoke Lambda
+  AddProductLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref AddProductLambda
+      Action: "lambda:InvokeFunction"
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${APIGateway}/*/POST/products"
+      
   # Deploy API Gateway
   APIDeployment:
     Type: AWS::ApiGateway::Deployment
