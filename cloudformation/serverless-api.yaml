@@ -8,11 +8,7 @@ Parameters:
 
   LambdaS3Bucket:
     Type: String
-    Description: "S3 Bucket where Lambda code is stored"
-
-  LambdaS3Key:
-    Type: String
-    Description: "S3 Key for the Lambda function zip file"
+    Description: "S3 Bucket where all Lambda function code is stored"
 
 Resources:
 
@@ -48,7 +44,7 @@ Resources:
       LogGroupName: !Sub "/aws/lambda/${AddProductLambda}"
       RetentionInDays: 7
 
-  # Lambda Function (S3-based)
+  # Lambda Function for Add Product
   AddProductLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -58,7 +54,23 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         S3Bucket: !Ref LambdaS3Bucket
-        S3Key: !Ref LambdaS3Key
+        S3Key: "add_product.zip"
+      Environment:
+        Variables:
+          MONGO_URI: !Ref MongoDBConnectionString
+      Timeout: 10
+
+  # Lambda Function for Get Products
+  GetProductsLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: "GetProducts"
+      Runtime: python3.8
+      Handler: get_products.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref LambdaS3Bucket
+        S3Key: "get_products.zip"
       Environment:
         Variables:
           MONGO_URI: !Ref MongoDBConnectionString
@@ -98,7 +110,20 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AddProductLambda.Arn}/invocations"
 
-  # Grant API Gateway Permission to invoke Lambda
+  # API Method (GET /products)
+  GetProductsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref APIGateway
+      ResourceId: !Ref ProductsResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetProductsLambda.Arn}/invocations"
+
+  # Grant API Gateway Permission to invoke AddProduct Lambda
   AddProductLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -107,10 +132,21 @@ Resources:
       Principal: "apigateway.amazonaws.com"
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${APIGateway}/*/POST/products"
 
+  # Grant API Gateway Permission to invoke GetProducts Lambda
+  GetProductsLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref GetProductsLambda
+      Action: "lambda:InvokeFunction"
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${APIGateway}/*/GET/products"
+
   # Deploy API Gateway (Without StageName)
   APIDeployment:
     Type: AWS::ApiGateway::Deployment
-    DependsOn: AddProductMethod
+    DependsOn: 
+      - AddProductMethod
+      - GetProductsMethod
     Properties:
       RestApiId: !Ref APIGateway
 

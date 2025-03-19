@@ -18,26 +18,30 @@ jobs:
         with:
           python-version: '3.8'
 
-      - name: Install Dependencies & Package Lambda Functions
+      - name: Install Dependencies & Package Each Lambda Function
         run: |
-          mkdir -p package
-          pip install --target package -r lambda_functions/requirements.txt
-          cp lambda_functions/*.py package/
-          cd package
-          zip -r ../add_product.zip .
-          cd ..
-          rm -rf package
+          for dir in lambda_functions/*; do
+            if [ -d "$dir" ]; then
+              function_name=$(basename "$dir")
+              echo "Packaging $function_name..."
+              
+              mkdir -p package
+              pip install --target package -r "$dir/requirements.txt"
+              cp "$dir"/*.py package/
+              
+              zip -r "${function_name}.zip" package/*
+              aws s3 cp "${function_name}.zip" "s3://${{ secrets.S3_BUCKET }}/${function_name}.zip"
+
+              rm -rf package "${function_name}.zip"
+            fi
+          done
 
       - name: Configure AWS CLI
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set region ${{ secrets.AWS_REGION }}
-
-      - name: Upload Lambda ZIP to S3
-        run: |
-          aws s3 cp add_product.zip s3://${{ secrets.S3_BUCKET }}/add_product.zip
-
+          
       - name: Export Environment Variables
         run: |
           echo "S3_BUCKET=${{ secrets.S3_BUCKET }}" >> $GITHUB_ENV
