@@ -12,17 +12,23 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
+        id: checkout
+        continue-on-error: false
 
       - name: Set Up Python
         uses: actions/setup-python@v3
         with:
           python-version: '3.8'
+        id: setup-python
+        continue-on-error: false
 
       - name: Configure AWS CLI
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set region ${{ secrets.AWS_REGION }}
+        id: configure-aws
+        continue-on-error: false
 
       - name: Install Dependencies & Package Each Lambda Function
         run: |
@@ -41,16 +47,22 @@ jobs:
               rm -rf package "${function_name}.zip"
             fi
           done
+        id: package-lambda
+        continue-on-error: false
 
       - name: Export Environment Variables
         run: |
           echo "S3_BUCKET=${{ secrets.S3_BUCKET }}" >> $GITHUB_ENV
           echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> $GITHUB_ENV
+        id: export-env
+        continue-on-error: false
 
       - name: Debug Variables
         run: |
           echo "Using S3_BUCKET: $S3_BUCKET"
           echo "Using MONGO_URI: $MONGO_URI"
+        id: debug-vars
+        continue-on-error: false
 
       - name: Deploy CloudFormation Stack
         run: |
@@ -60,5 +72,31 @@ jobs:
             --capabilities CAPABILITY_NAMED_IAM \
             --parameter-overrides \
               MongoDBConnectionString=$MONGO_URI \
-              LambdaS3Bucket=$S3_BUCKET \
-              LambdaS3Key=add_product.zip
+              LambdaS3Bucket=$S3_BUCKET
+        id: deploy-cloudformation
+        continue-on-error: false
+
+      - name: Check Deployment Status
+        run: |
+          echo "### Stage Status Summary ###"
+          echo "Checkout Repository: ${{ steps.checkout.outcome }}"
+          echo "Set Up Python: ${{ steps.setup-python.outcome }}"
+          echo "Configure AWS CLI: ${{ steps.configure-aws.outcome }}"
+          echo "Package Lambda Functions: ${{ steps.package-lambda.outcome }}"
+          echo "Export Environment Variables: ${{ steps.export-env.outcome }}"
+          echo "Debug Variables: ${{ steps.debug-vars.outcome }}"
+          echo "Deploy CloudFormation Stack: ${{ steps.deploy-cloudformation.outcome }}"
+          
+          if [[ "${{ steps.checkout.outcome }}" != "success" ||
+                "${{ steps.setup-python.outcome }}" != "success" ||
+                "${{ steps.configure-aws.outcome }}" != "success" ||
+                "${{ steps.package-lambda.outcome }}" != "success" ||
+                "${{ steps.export-env.outcome }}" != "success" ||
+                "${{ steps.debug-vars.outcome }}" != "success" ||
+                "${{ steps.deploy-cloudformation.outcome }}" != "success" ]]; then
+            echo "❌ Deployment Failed!"
+            exit 1
+          else
+            echo "✅ Deployment Successful!"
+          fi
+        id: check-status
