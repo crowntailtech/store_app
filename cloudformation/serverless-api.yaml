@@ -107,21 +107,13 @@ Resources:
       Principal: "apigateway.amazonaws.com"
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${APIGateway}/*/POST/products"
 
-  # Deploy API Gateway
+  # Deploy API Gateway (With Logging Configured Directly)
   APIDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn: AddProductMethod
     Properties:
       RestApiId: !Ref APIGateway
       StageName: "prod"
-
-  # API Gateway Stage (With Logging)
-  APIStage:
-    Type: AWS::ApiGateway::Stage
-    Properties:
-      StageName: "prod"
-      RestApiId: !Ref APIGateway
-      DeploymentId: !Ref APIDeployment
       AccessLogSetting:
         DestinationArn: !GetAtt ApiGatewayLogGroup.Arn
         Format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","responseLength":"$context.responseLength"}'
