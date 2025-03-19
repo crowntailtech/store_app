@@ -1,0 +1,57 @@
+name: Deploy AWS Lambda & API Gateway
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set Up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.8'
+
+      - name: Install Dependencies & Package Lambda Functions
+        run: |
+          mkdir -p package
+          pip install --target package -r lambda_functions/requirements.txt
+          cp lambda_functions/*.py package/
+          cd package
+          zip -r ../add_product.zip .
+          cd ..
+          rm -rf package
+
+      - name: Configure AWS CLI
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region ${{ secrets.AWS_REGION }}
+
+      - name: Upload Lambda ZIP to S3
+        run: |
+          aws s3 cp add_product.zip s3://${{ secrets.S3_BUCKET }}/add_product.zip
+
+      - name: Get S3 Object Version
+        id: get_version
+        run: |
+          VERSION_ID=$(aws s3api head-object --bucket ${{ secrets.S3_BUCKET }} --key add_product.zip --query VersionId --output text)
+          echo "S3_VERSION_ID=$VERSION_ID" >> $GITHUB_ENV
+
+      - name: Deploy CloudFormation Stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name MongoDBProductAPI \
+            --template-file cloudformation/serverless-api.yaml \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --parameter-overrides \
+              MongoDBConnectionString=${{ secrets.MONGO_URI }} \
+              LambdaS3Bucket=${{ secrets.S3_BUCKET }} \
+              LambdaS3Key=add_product.zip \
+              LambdaS3Version=${{ env.S3_VERSION_ID }}

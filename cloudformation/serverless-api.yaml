@@ -1,0 +1,111 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "CloudFormation template for MongoDB-backed API using Lambda and API Gateway"
+
+Parameters:
+  MongoDBConnectionString:
+    Type: String
+    Description: "MongoDB Atlas Connection URI"
+
+  LambdaS3Bucket:
+    Type: String
+    Description: "S3 Bucket where Lambda code is stored"
+
+  LambdaS3Key:
+    Type: String
+    Description: "S3 Key for the Lambda function zip file"
+
+  LambdaS3Version:
+    Type: String
+    Default: ""
+    Description: "S3 Object Version for Lambda code"
+
+Resources:
+
+  # IAM Role for Lambda
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: LambdaExecutionRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: 
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: LambdaPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: "*"
+
+  # Lambda Function (S3-based)
+  AddProductLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: "AddProduct"
+      Runtime: python3.8
+      Handler: add_product.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref LambdaS3Bucket
+        S3Key: !Ref LambdaS3Key
+        S3ObjectVersion: !Ref LambdaS3Version
+      Environment:
+        Variables:
+          MONGO_URI: !Ref MongoDBConnectionString
+      Timeout: 10
+
+  # API Gateway
+  APIGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: "MongoDBProductAPI"
+
+  # API Resource (/products)
+  ProductsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref APIGateway
+      ParentId: !GetAtt APIGateway.RootResourceId
+      PathPart: "products"
+
+  # API Method (POST /products/add)
+  AddProductMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref APIGateway
+      ResourceId: !Ref ProductsResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 
+          - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AddProductLambda.Arn}/invocations"
+          - { AddProductLambda: !Ref AddProductLambda }
+
+  # Deploy API Gateway
+  APIDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: AddProductMethod
+    Properties:
+      RestApiId: !Ref APIGateway
+      StageName: "prod"
+
+  # Grant API Gateway Permission to invoke Lambda
+  AddProductLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref AddProductLambda
+      Action: "lambda:InvokeFunction"
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${APIGateway}/*/POST/products/add"
