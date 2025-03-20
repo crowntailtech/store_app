@@ -71,6 +71,8 @@ Resources:
         Variables:
           MONGO_URI: !Ref MongoDBConnectionString
       Timeout: 10
+    UpdateReplacePolicy: Retain  # ✅ Prevents deletion on update
+    DeletionPolicy: Retain 
 
   GetProductsLambda:
     Type: AWS::Lambda::Function
@@ -86,6 +88,8 @@ Resources:
         Variables:
           MONGO_URI: !Ref MongoDBConnectionString
       Timeout: 10
+    UpdateReplacePolicy: Retain  # ✅ Prevents deletion on update
+    DeletionPolicy: Retain 
 
   GetProductByIdLambda:
     Type: AWS::Lambda::Function
@@ -102,6 +106,8 @@ Resources:
           MONGO_URI: !Ref MongoDBConnectionString
           S3_BUCKET: !Ref LambdaS3Bucket
       Timeout: 10
+    UpdateReplacePolicy: Retain  # ✅ Prevents deletion on update
+    DeletionPolicy: Retain 
 
   # API Gateway
   APIGateway:
