@@ -37,14 +37,26 @@ Resources:
                   - "logs:PutLogEvents"
                 Resource: "arn:aws:logs:*:*:*"
 
-  # CloudWatch Log Group for Lambda
-  LambdaLogGroup:
+  # CloudWatch Log Groups for All Lambda Functions
+  LambdaLogGroupAddProduct:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AddProductLambda}"
       RetentionInDays: 7
 
-  # Lambda Function for Add Product
+  LambdaLogGroupGetProducts:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${GetProductsLambda}"
+      RetentionInDays: 7
+
+  LambdaLogGroupGetProductById:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${GetProductByIdLambda}"
+      RetentionInDays: 7
+
+  # Lambda Functions
   AddProductLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -60,7 +72,6 @@ Resources:
           MONGO_URI: !Ref MongoDBConnectionString
       Timeout: 10
 
-  # Lambda Function for Get Products
   GetProductsLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -76,7 +87,6 @@ Resources:
           MONGO_URI: !Ref MongoDBConnectionString
       Timeout: 10
 
-  # Lambda Function for Get Product by ID
   GetProductByIdLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -90,7 +100,7 @@ Resources:
       Environment:
         Variables:
           MONGO_URI: !Ref MongoDBConnectionString
-          S3_BUCKET: !Ref LambdaS3Bucket  # Use the same S3 bucket
+          S3_BUCKET: !Ref LambdaS3Bucket
       Timeout: 10
 
   # API Gateway
@@ -106,15 +116,22 @@ Resources:
       LogGroupName: !Sub "/aws/api-gateway/${APIGateway}"
       RetentionInDays: 7
 
-  # API Resource (/products/{id})
+  # API Resources
+  ProductsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref APIGateway
+      ParentId: !GetAtt APIGateway.RootResourceId
+      PathPart: "products"
+
   ProductByIdResource:
     Type: AWS::ApiGateway::Resource
     Properties:
       RestApiId: !Ref APIGateway
       ParentId: !Ref ProductsResource
-      PathPart: "{id}"  # Dynamic path parameter
+      PathPart: "{id}"
 
-  # API Method (POST /products/add)
+  # API Methods
   AddProductMethod:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -127,7 +144,6 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AddProductLambda.Arn}/invocations"
 
-  # API Method (GET /products)
   GetProductsMethod:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -140,7 +156,6 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetProductsLambda.Arn}/invocations"
 
-  # API Method (GET /products/{id})
   GetProductByIdMethod:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -149,13 +164,13 @@ Resources:
       HttpMethod: GET
       AuthorizationType: NONE
       RequestParameters:
-        method.request.path.id: true  # Ensure path param is required
+        method.request.path.id: true
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
         Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetProductByIdLambda.Arn}/invocations"
 
-  # Grant API Gateway Permission to invoke AddProduct Lambda
+  # API Gateway Permissions
   AddProductLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -164,7 +179,6 @@ Resources:
       Principal: "apigateway.amazonaws.com"
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${APIGateway}/*/POST/products"
 
-  # Grant API Gateway Permission to invoke GetProducts Lambda
   GetProductsLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -173,7 +187,6 @@ Resources:
       Principal: "apigateway.amazonaws.com"
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${APIGateway}/*/GET/products"
 
-  # Grant API Gateway Permission to invoke GetProductById Lambda
   GetProductByIdLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -182,17 +195,17 @@ Resources:
       Principal: "apigateway.amazonaws.com"
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${APIGateway}/*/GET/products/*"
 
-  # Deploy API Gateway (Without StageName)
+  # Force API Deployment Update
   APIDeployment:
     Type: AWS::ApiGateway::Deployment
-    DependsOn: 
+    DependsOn:
       - AddProductMethod
       - GetProductsMethod
       - GetProductByIdMethod
     Properties:
       RestApiId: !Ref APIGateway
+      Description: !Sub "Deployment - ${AWS::StackName} - ${AWS::Region}"
 
-  # Define API Gateway Stage (Separate from Deployment)
   APIStage:
     Type: AWS::ApiGateway::Stage
     Properties:
