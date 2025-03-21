@@ -109,6 +109,36 @@ Resources:
     UpdateReplacePolicy: Retain  # ✅ Prevents deletion on update
     DeletionPolicy: Retain 
 
+  # API Method (DELETE /products/{id})
+  DeleteProductMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref APIGateway
+      ResourceId: !Ref ProductByIdResource
+      HttpMethod: DELETE
+      AuthorizationType: NONE
+      RequestParameters:
+        method.request.path.id: true
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteProductLambda.Arn}/invocations"
+
+  # API Method (PUT /products/{id})
+  UpdateProductMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref APIGateway
+      ResourceId: !Ref ProductByIdResource
+      HttpMethod: PUT
+      AuthorizationType: NONE
+      RequestParameters:
+        method.request.path.id: true
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateProductLambda.Arn}/invocations"
+
   # API Gateway
   APIGateway:
     Type: AWS::ApiGateway::RestApi
@@ -176,6 +206,36 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetProductByIdLambda.Arn}/invocations"
 
+  # API Method (DELETE /products/{id})
+  DeleteProductMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref APIGateway
+      ResourceId: !Ref ProductByIdResource
+      HttpMethod: DELETE
+      AuthorizationType: NONE
+      RequestParameters:
+        method.request.path.id: true
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteProductLambda.Arn}/invocations"
+
+  # API Method (PUT /products/{id})
+  UpdateProductMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref APIGateway
+      ResourceId: !Ref ProductByIdResource
+      HttpMethod: PUT
+      AuthorizationType: NONE
+      RequestParameters:
+        method.request.path.id: true
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateProductLambda.Arn}/invocations"
+
   # API Gateway Permissions
   AddProductLambdaPermission:
     Type: AWS::Lambda::Permission
@@ -201,6 +261,24 @@ Resources:
       Principal: "apigateway.amazonaws.com"
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${APIGateway}/*/GET/products/*"
 
+  # Grant API Gateway Permission to invoke DeleteProduct Lambda
+  DeleteProductLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DeleteProductLambda
+      Action: "lambda:InvokeFunction"
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${APIGateway}/*/DELETE/products/*"
+
+  # Grant API Gateway Permission to invoke UpdateProduct Lambda
+  UpdateProductLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref UpdateProductLambda
+      Action: "lambda:InvokeFunction"
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${APIGateway}/*/PUT/products/*"
+
   # Force API Deployment Update
   APIDeployment:
     Type: AWS::ApiGateway::Deployment
@@ -208,6 +286,8 @@ Resources:
       - AddProductMethod
       - GetProductsMethod
       - GetProductByIdMethod
+      - DeleteProductMethod  # ✅ Added
+      - UpdateProductMethod
     Properties:
       RestApiId: !Ref APIGateway
       Description: !Sub "Deployment - ${AWS::StackName} - ${AWS::Region}"
