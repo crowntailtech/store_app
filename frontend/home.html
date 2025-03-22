@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Store - Home</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+<body onload="loadProducts()">
+
+    <!-- Navbar -->
+    <header>
+        <div class="navbar">
+            <div class="logo">Cloud Store</div>
+            <nav>
+                <a href="home.html">Home</a>
+                <a href="profile.html">My Profile</a>
+                <a href="#" onclick="logout()">Logout</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Product List -->
+    <main>
+        <h2>Product List</h2>
+        <div id="product-list" class="product-container">
+            <!-- First card for adding a product (Always on the Left) -->
+            <div class="product-card add-card" onclick="location.href='addProduct.html'">
+                <i class="fas fa-plus"></i>
+                <p>+</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Store - My Profile</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body onload="loadUserProfile();">
+
+    <!-- Navbar -->
+    <header>
+        <div class="navbar">
+            <div class="logo">Cloud Store</div>
+            <nav>
+                <a href="home.html">Home</a>
+                <a href="profile.html">My Profile</a>
+                <a href="#" onclick="logout()">Logout</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Profile Section -->
+    <main>
+        <div class="profile-container">
+            <h2>My Profile</h2>
+            <div class="profile-info">
+                <p><strong>Name:</strong> <span id="profile-name">Loading...</span></p>
+                <p><strong>Email:</strong> <span id="profile-email">Loading...</span></p>
+                <p><strong>Registered On:</strong> <span id="profile-date">Loading...</span></p>
+            </div>
+            <button onclick="location.href='editProfile.html'">Edit Profile</button>
+            <button onclick="location.href='changePassword.html'">Change Password</button>
+        </div>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+</html>
