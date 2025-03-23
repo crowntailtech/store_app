@@ -199,14 +199,6 @@ Resources:
     Properties:
       AuthType: NONE
       TargetFunctionArn: !GetAtt LoginUserLambda.Arn
-      Cors:
-        AllowOrigins:
-          - "*"
-        AllowMethods:
-          - GET
-          - POST
-        AllowHeaders:
-          - Content-Type
 
   LoginUserPermissionForUrl:
     Type: AWS::Lambda::Permission
