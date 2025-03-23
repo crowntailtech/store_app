@@ -36,6 +36,11 @@ Resources:
                   - "logs:CreateLogStream"
                   - "logs:PutLogEvents"
                 Resource: "arn:aws:logs:*:*:*"
+              - Effect: Allow
+                Action:
+                  - "s3:GetObject"
+                  - "s3:HeadObject"
+                Resource: !Sub "arn:aws:s3:::${LambdaS3Bucket}/products/*"
 
   # CloudWatch Log Groups for All Lambda Functions
   LambdaLogGroupAddProduct:
@@ -70,6 +75,7 @@ Resources:
       Environment:
         Variables:
           MONGO_URI: !Ref MongoDBConnectionString
+          S3_BUCKET: !Ref LambdaS3Bucket
       Timeout: 10
     UpdateReplacePolicy: Retain  # ✅ Prevents deletion on update
     DeletionPolicy: Retain 
@@ -87,6 +93,7 @@ Resources:
       Environment:
         Variables:
           MONGO_URI: !Ref MongoDBConnectionString
+          S3_BUCKET: !Ref LambdaS3Bucket
       Timeout: 10
     UpdateReplacePolicy: Retain  # ✅ Prevents deletion on update
     DeletionPolicy: Retain 
@@ -140,7 +147,37 @@ Resources:
       Environment:
         Variables:
           MONGO_URI: !Ref MongoDBConnectionString
+          S3_BUCKET: !Ref LambdaS3Bucket
       Timeout: 10
+
+  RegisterUserLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: RegisterUser
+      Runtime: python3.8
+      Handler: register_user.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref LambdaS3Bucket
+        S3Key: register_user.zip
+      Environment:
+        Variables:
+          MONGO_URI: !Ref MongoDBConnectionString
+      Timeout: 10
+
+  RegisterUserFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      AuthType: NONE
+      TargetFunctionArn: !GetAtt RegisterUserLambda.Arn
+
+  RegisterUserPermissionForUrl:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref RegisterUserLambda
+      Action: lambda:InvokeFunctionUrl
+      Principal: "*"
+      FunctionUrlAuthType: NONE
 
 
   # API Gateway
