@@ -1,3 +1,2 @@
 pymongo
 boto3
-passlib[bcrypt]
