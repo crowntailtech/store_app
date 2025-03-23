@@ -1,4 +1,4 @@
-const LOGIN_URL = "https://2cxrie3ui4nvib5gok4fg7llxm0kodgz.lambda-url.us-east-1.on.aws/";
+const LOGIN_URL = "https://ma6z6vv6syvlxpwsctj5puq7py0nqdct.lambda-url.us-east-1.on.aws/";
 
 document.getElementById("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();

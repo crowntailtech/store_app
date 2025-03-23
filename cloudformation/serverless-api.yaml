@@ -182,7 +182,7 @@ Resources:
   LoginUserLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: LoginUsers
+      FunctionName: LoginUser
       Runtime: python3.8
       Handler: login_user.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
@@ -235,6 +235,22 @@ Resources:
       RestApiId: !Ref APIGateway
       ParentId: !Ref ProductsResource
       PathPart: "{id}"
+
+  # Resource for /register
+  RegisterUserResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref APIGateway
+      ParentId: !GetAtt APIGateway.RootResourceId
+      PathPart: "register"
+
+  # Resource for /login
+  LoginUserResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref APIGateway
+      ParentId: !GetAtt APIGateway.RootResourceId
+      PathPart: "login"
 
   # API Methods
   AddProductMethod:
@@ -305,6 +321,30 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateProductLambda.Arn}/invocations"
 
+  LoginUserApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref APIGateway
+      ResourceId: !Ref LoginUserResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LoginUserLambda.Arn}/invocations"
+
+  RegisterUserApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref APIGateway
+      ResourceId: !Ref RegisterUserResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RegisterUserLambda.Arn}/invocations"
+
   # API Gateway Permissions
   AddProductLambdaPermission:
     Type: AWS::Lambda::Permission
@@ -347,6 +387,22 @@ Resources:
       Action: "lambda:InvokeFunction"
       Principal: "apigateway.amazonaws.com"
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${APIGateway}/*/PUT/products/*"
+
+  RegisterUserLambdaPermissionApi:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref RegisterUserLambda
+      Action: "lambda:InvokeFunction"
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${APIGateway}/*/POST/register"
+
+  LoginUserLambdaPermissionApi:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LoginUserLambda
+      Action: "lambda:InvokeFunction"
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${APIGateway}/*/POST/login"
 
   # Force API Deployment Update
   APIDeployment:
