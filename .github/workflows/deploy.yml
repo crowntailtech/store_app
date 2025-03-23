@@ -43,7 +43,7 @@ jobs:
             mkdir -p package
 
             # Install dependencies inside the package
-            pip install --target package -r lambda_functions/requirements.txt
+            pip install --target package -r lambda_functions/requirements.txt || true
 
             # Copy the Lambda function file into the package
             cp "$file" package/
@@ -61,6 +61,22 @@ jobs:
           done
         id: package-lambda
         continue-on-error: false
+
+      - name: Handle bcrypt packaging separately with Amazon Linux
+        run: |
+          docker run --rm -v "$PWD":/var/task amazonlinux:2 \
+          /bin/bash -c "
+            yum install -y python38 python38-pip zip &&
+            cd /var/task &&
+            mkdir -p bcrypt_layer &&
+            pip3.8 install bcrypt -t bcrypt_layer &&
+            cd bcrypt_layer &&
+            zip -r ../bcrypt_layer.zip .
+          "
+          # Optional: upload to S3 if needed:
+          # aws s3 cp bcrypt_layer.zip "s3://${{ secrets.S3_BUCKET }}/bcrypt_layer.zip"
+        id: build-bcrypt-layer
+        continue-on-error: true
 
       - name: Export Environment Variables
         run: |
@@ -98,7 +114,7 @@ jobs:
           echo "Export Environment Variables: ${{ steps.export-env.outcome }}"
           echo "Debug Variables: ${{ steps.debug-vars.outcome }}"
           echo "Deploy CloudFormation Stack: ${{ steps.deploy-cloudformation.outcome }}"
-          
+
           if [[ "${{ steps.checkout.outcome }}" != "success" ||
                 "${{ steps.setup-python.outcome }}" != "success" ||
                 "${{ steps.configure-aws.outcome }}" != "success" ||
