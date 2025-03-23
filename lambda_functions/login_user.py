@@ -3,6 +3,7 @@ import os
 import hashlib
 from pymongo import MongoClient
 
+# Setup MongoDB connection
 MONGO_URI = os.environ["MONGO_URI"]
 client = MongoClient(MONGO_URI)
 db = client["CloudStore"]
@@ -10,6 +11,7 @@ collection = db["Users"]
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
+
 def lambda_handler(event, context):
     headers = {
         "Access-Control-Allow-Origin": "*",
@@ -18,46 +20,55 @@ def lambda_handler(event, context):
     }
 
     try:
-        # Handle OPTIONS for preflight
         if event["requestContext"]["http"]["method"] == "OPTIONS":
             return {
                 "statusCode": 200,
                 "headers": headers,
-                "body": json.dumps({"message": "CORS check passed"})
+                "body": json.dumps({"message": "CORS preflight passed"})
             }
 
         body = json.loads(event["body"])
-        name = body.get("name")
         email = body.get("email")
         password = body.get("password")
 
-        if not name or not email or not password:
+        if not email or not password:
             return {
                 "statusCode": 400,
                 "headers": headers,
-                "body": json.dumps({"error": "All fields are required"})
+                "body": json.dumps({"error": "Email and password are required"})
             }
 
-        if collection.find_one({"email": email}):
+        user = collection.find_one({"email": email})
+        if not user:
             return {
-                "statusCode": 409,
+                "statusCode": 404,
                 "headers": headers,
-                "body": json.dumps({"error": "User already exists"})
+                "body": json.dumps({"error": "User not found"})
             }
 
-        hashed_password = hash_password(password)
-        collection.insert_one({"name": name, "email": email, "password": hashed_password})
+        if user["password"] != hash_password(password):
+            return {
+                "statusCode": 401,
+                "headers": headers,
+                "body": json.dumps({"error": "Invalid password"})
+            }
 
         return {
-            "statusCode": 201,
+            "statusCode": 200,
             "headers": headers,
-            "body": json.dumps({"success": True, "message": "User registered successfully"})
+            "body": json.dumps({
+                "success": True,
+                "message": "Login successful",
+                "user": {
+                    "name": user["name"],
+                    "email": user["email"]
+                }
+            })
         }
 
     except Exception as e:
-        print("Error:", str(e))  # ✅ Useful for CloudWatch logs
         return {
             "statusCode": 500,
             "headers": headers,
-            "body": json.dumps({"error": "Internal Server Error", "details": str(e)})
+            "body": json.dumps({"error": "Internal server error", "details": str(e)})
         }

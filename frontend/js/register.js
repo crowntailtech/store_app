@@ -1,4 +1,4 @@
-const LAMBDA_URL = "https://lambda-url-for-register.amazonaws.com"; // 🔁 Replace with actual Lambda URL
+const LAMBDA_URL = "https://rwlaqv4xd346uatleuf5kvka5m0lcsdh.lambda-url.us-east-1.on.aws/";
 
 document.getElementById("registerForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -13,10 +13,16 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
     const res = await fetch(LAMBDA_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
-    const data = await res.json();
+    let data;
+    try {
+      data = await res.json(); // Try to parse JSON
+    } catch (jsonErr) {
+      console.warn("⚠️ Response is not JSON. Falling back.");
+      data = { error: "Unexpected server response" };
+    }
 
     if (res.ok && data.success) {
       alert("✅ Registered successfully!");
@@ -26,6 +32,6 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
     }
   } catch (err) {
     console.error("Register error:", err);
-    alert("❌ Error occurred during registration.");
+    alert("❌ Network error occurred during registration.");
   }
 });

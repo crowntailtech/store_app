@@ -179,6 +179,43 @@ Resources:
       Principal: "*"
       FunctionUrlAuthType: NONE
 
+  LoginUserLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: LoginUser
+      Runtime: python3.8
+      Handler: login_user.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref LambdaS3Bucket
+        S3Key: login_user.zip
+      Environment:
+        Variables:
+          MONGO_URI: !Ref MongoDBConnectionString
+      Timeout: 10
+
+  LoginUserFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      AuthType: NONE
+      TargetFunctionArn: !GetAtt LoginUserLambda.Arn
+      Cors:
+        AllowOrigins:
+          - "*"
+        AllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+
+  LoginUserPermissionForUrl:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LoginUserLambda
+      Action: lambda:InvokeFunctionUrl
+      Principal: "*"
+      FunctionUrlAuthType: NONE
 
   # API Gateway
   APIGateway:
