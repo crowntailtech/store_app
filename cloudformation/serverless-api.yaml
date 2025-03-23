@@ -182,7 +182,7 @@ Resources:
   LoginUserLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: LoginUser
+      FunctionName: LoginUsers
       Runtime: python3.8
       Handler: login_user.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
