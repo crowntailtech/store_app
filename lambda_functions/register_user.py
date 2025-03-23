@@ -1,18 +1,20 @@
+# ✅ Lambda function: register_user.py
 import json
 import os
-import bcrypt
 from pymongo import MongoClient
+from passlib.hash import bcrypt
 
-# Load environment variables
+# Environment variables
 MONGO_URI = os.environ["MONGO_URI"]
+
+# Connect to MongoDB
 client = MongoClient(MONGO_URI)
 db = client["CloudStore"]
-collection = db["Users"]  # Create a separate 'Users' collection
+collection = db["Users"]
 
 def lambda_handler(event, context):
     try:
         body = json.loads(event["body"])
-
         name = body.get("name")
         email = body.get("email")
         password = body.get("password")
@@ -26,14 +28,14 @@ def lambda_handler(event, context):
         # Check if user already exists
         if collection.find_one({"email": email}):
             return {
-                "statusCode": 400,
-                "body": json.dumps({"error": "Email already registered."})
+                "statusCode": 409,
+                "body": json.dumps({"error": "User already exists with this email."})
             }
 
-        # Hash the password
-        hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        # Hash password
+        hashed_password = bcrypt.hash(password)
 
-        # Insert user record
+        # Insert user
         collection.insert_one({
             "name": name,
             "email": email,
@@ -47,14 +49,11 @@ def lambda_handler(event, context):
                 "Access-Control-Allow-Methods": "POST, OPTIONS",
                 "Access-Control-Allow-Headers": "Content-Type"
             },
-            "body": json.dumps({"success": True, "message": "User registered successfully."})
+            "body": json.dumps({"message": "User registered successfully."})
         }
 
     except Exception as e:
         return {
             "statusCode": 500,
-            "headers": {
-                "Access-Control-Allow-Origin": "*"
-            },
             "body": json.dumps({"error": str(e)})
         }

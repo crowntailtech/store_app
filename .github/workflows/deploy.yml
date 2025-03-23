@@ -62,22 +62,6 @@ jobs:
         id: package-lambda
         continue-on-error: false
 
-      - name: Handle bcrypt packaging separately with Amazon Linux
-        run: |
-          docker run --rm -v "$PWD":/var/task amazonlinux:2 \
-          /bin/bash -c "
-            yum install -y python38 python38-pip zip &&
-            cd /var/task &&
-            mkdir -p bcrypt_layer &&
-            pip3.8 install bcrypt -t bcrypt_layer &&
-            cd bcrypt_layer &&
-            zip -r ../bcrypt_layer.zip .
-          "
-          # Optional: upload to S3 if needed:
-          # aws s3 cp bcrypt_layer.zip "s3://${{ secrets.S3_BUCKET }}/bcrypt_layer.zip"
-        id: build-bcrypt-layer
-        continue-on-error: true
-
       - name: Export Environment Variables
         run: |
           echo "S3_BUCKET=${{ secrets.S3_BUCKET }}" >> $GITHUB_ENV
