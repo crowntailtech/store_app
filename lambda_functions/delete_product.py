@@ -17,7 +17,7 @@ def lambda_handler(event, context):
     product_id = event["pathParameters"]["id"]
 
     try:
-        # ✅ 1. Delete the product from MongoDB
+        # 1. Delete the product from MongoDB
         result = collection.delete_one({"_id": ObjectId(product_id)})
         if result.deleted_count == 0:
             return {
@@ -28,7 +28,7 @@ def lambda_handler(event, context):
                 "body": json.dumps({"error": "Product not found in database."})
             }
 
-        # ✅ 2. Delete all images from S3 folder: products/{product_id}/
+        # 2. Delete all images from S3 folder: products/{product_id}/
         prefix = f"products/{product_id}/"
         existing = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
 

@@ -1,4 +1,4 @@
-const LAMBDA_URL = "https://rwlaqv4xd346uatleuf5kvka5m0lcsdh.lambda-url.us-east-1.on.aws/";
+const LAMBDA_URL = "https://out03xtzz3.execute-api.us-east-1.amazonaws.com/prod/register";
 
 document.getElementById("registerForm").addEventListener("submit", async (e) => {
   e.preventDefault();

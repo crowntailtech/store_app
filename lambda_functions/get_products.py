@@ -4,11 +4,11 @@ import pymongo
 from pymongo.errors import ConnectionFailure
 import boto3
 
-# ✅ Get environment variables
+# Get environment variables
 MONGO_URI = os.environ["MONGO_URI"]
 S3_BUCKET = os.environ["S3_BUCKET"]
 
-# ✅ Initialize MongoDB Client
+# Initialize MongoDB Client
 try:
     client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=3000)
     client.admin.command('ping')
@@ -18,7 +18,7 @@ try:
 except ConnectionFailure:
     print("❌ ERROR: Unable to connect to MongoDB!")
 
-# ✅ S3 Client
+# S3 Client
 s3_client = boto3.client("s3")
 
 def lambda_handler(event, context):
@@ -29,7 +29,7 @@ def lambda_handler(event, context):
             product_id = str(product["_id"])
             product["_id"] = product_id
 
-            # ✅ Check inside folder: products/{product_id}/original.{ext}
+            # Check inside folder: products/{product_id}/original.{ext}
             image_extensions = ["jpg", "jpeg", "png", "webp"]
             found = False
 

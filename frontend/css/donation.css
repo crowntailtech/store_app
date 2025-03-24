@@ -1,0 +1,80 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f0f8ff;
+  }
+  
+  .navbar {
+    background-color: #007bff;
+    color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .navbar .logo {
+    font-size: 24px;
+    font-weight: bold;
+  }
+  
+  .navbar nav a {
+    color: white;
+    margin-left: 20px;
+    text-decoration: none;
+  }
+  
+  .navbar nav a:hover {
+    text-decoration: underline;
+  }
+  
+  main {
+    padding: 20px;
+  }
+  
+  .campaign-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+  }
+  
+  .campaign-card {
+    background: white;
+    padding: 20px;
+    width: 300px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  
+  .campaign-card h3 {
+    margin-top: 0;
+    color: #007bff;
+  }
+  
+  .campaign-card input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 10px;
+  }
+  
+  .campaign-card button {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background-color: #007bff;
+    border: none;
+    color: white;
+    cursor: pointer;
+    width: 100%;
+    border-radius: 4px;
+  }
+  
+  .campaign-card button:hover {
+    background-color: #0056b3;
+  }
+  
+  .donation-msg {
+    margin-top: 8px;
+    font-size: 14px;
+  }
+  

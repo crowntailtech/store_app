@@ -10,6 +10,7 @@ collection = db["Users"]
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
+
 def lambda_handler(event, context):
     headers = {
         "Access-Control-Allow-Origin": "*",
@@ -18,8 +19,8 @@ def lambda_handler(event, context):
     }
 
     try:
-        # Handle OPTIONS for preflight
-        if event["requestContext"]["http"]["method"] == "OPTIONS":
+        
+        if event.get("httpMethod", "") == "OPTIONS":
             return {
                 "statusCode": 200,
                 "headers": headers,
@@ -55,7 +56,7 @@ def lambda_handler(event, context):
         }
 
     except Exception as e:
-        print("Error:", str(e))  # ✅ Useful for CloudWatch logs
+        print("Error:", str(e))
         return {
             "statusCode": 500,
             "headers": headers,

@@ -20,13 +20,15 @@ def lambda_handler(event, context):
     }
 
     try:
-        if event["requestContext"]["http"]["method"] == "OPTIONS":
+        # Fix for CORS check (works with API Gateway)
+        if event.get("httpMethod", "") == "OPTIONS":
             return {
                 "statusCode": 200,
                 "headers": headers,
                 "body": json.dumps({"message": "CORS preflight passed"})
             }
 
+        # Parse request body
         body = json.loads(event["body"])
         email = body.get("email")
         password = body.get("password")
@@ -67,6 +69,7 @@ def lambda_handler(event, context):
         }
 
     except Exception as e:
+        print("Error:", str(e))
         return {
             "statusCode": 500,
             "headers": headers,

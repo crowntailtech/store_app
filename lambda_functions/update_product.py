@@ -22,13 +22,13 @@ def lambda_handler(event, context):
         price = float(body.get("price"))
         currency = body.get("currency")
 
-        # ✅ Update MongoDB
+        # Update MongoDB
         collection.update_one(
             {"_id": ObjectId(product_id)},
             {"$set": {"name": name, "price": price, "currency": currency}}
         )
 
-        # ✅ Upload Base64 image to S3 if provided
+        # Upload Base64 image to S3 if provided
         image_base64 = body.get("image_base64")
         image_type = body.get("image_type")  # e.g., "image/png"
 

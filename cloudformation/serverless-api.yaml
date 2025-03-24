@@ -411,8 +411,10 @@ Resources:
       - AddProductMethod
       - GetProductsMethod
       - GetProductByIdMethod
-      - DeleteProductMethod  # ✅ Added
+      - DeleteProductMethod
       - UpdateProductMethod
+      - RegisterUserApiMethod
+      - LoginUserApiMethod
     Properties:
       RestApiId: !Ref APIGateway
       Description: !Sub "Deployment - ${AWS::StackName} - ${AWS::Region}"

@@ -22,7 +22,7 @@ def lambda_handler(event, context):
         price = float(body.get("price"))
         currency = body.get("currency")
 
-        # ✅ Insert into MongoDB
+        # Insert into MongoDB
         product = {
             "name": name,
             "price": price,
@@ -31,7 +31,7 @@ def lambda_handler(event, context):
         result = collection.insert_one(product)
         product_id = str(result.inserted_id)
 
-        # ✅ Upload Base64 image to S3 if provided
+        # Upload Base64 image to S3 if provided
         image_base64 = body.get("image_base64")
         image_type = body.get("image_type")  # e.g., image/png
 

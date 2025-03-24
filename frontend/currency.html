@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Currency Converter</title>
+  <link rel="stylesheet" href="css/currency.css" />
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="logo">Cloud Store</div>
+    <nav>
+      <a href="home.html">Home</a>
+      <a href="currency.html" class="active">Currency Converter</a>
+      <a href="donation.html">Donation</a>
+      <a href="login.html">Logout</a>
+    </nav>
+  </header>
+
+  <!-- Main content container -->
+  <div class="main-content">
+    <div class="converter-container">
+      <h2>💱 Currency Converter</h2>
+
+      <label for="amount"><strong>Amount:</strong></label>
+      <input type="number" id="amount" placeholder="Enter amount" />
+
+      <label for="from"><strong>From:</strong></label>
+      <select id="from">
+        <option value="INR">INR (₹)</option>
+        <option value="USD">USD ($)</option>
+        <option value="EUR">EUR (€)</option>
+        <option value="GBP">GBP (£)</option>
+        <option value="JPY">JPY (¥)</option>
+      </select>
+
+      <label for="to"><strong>To:</strong></label>
+      <select id="to">
+        <option value="USD">USD ($)</option>
+        <option value="INR">INR (₹)</option>
+        <option value="EUR">EUR (€)</option>
+        <option value="GBP">GBP (£)</option>
+        <option value="JPY">JPY (¥)</option>
+      </select>
+
+      <button id="convertBtn">Convert</button>
+
+      <div id="result" class="result-box"></div>
+    </div>
+  </div>
+
+  <!-- JS script -->
+  <script src="js/currency.js"></script>
+</body>
+</html>
